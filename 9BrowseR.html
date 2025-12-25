@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>9BrowseR - Balanced Edition</title>
+    <style>
+        :root {
+            --bg-color: #008080; --win-bg: #c0c0c0; --view-bg: #ffffff;
+            --text-color: #000000; --logo-browser-color: #4285f4;
+            --border-light: #fff; --border-dark: #808080;
+        }
+        body.dark-mode {
+            --bg-color: #1a1a1a; --win-bg: #2d2d2d; --view-bg: #121212;
+            --text-color: #ffffff; --logo-browser-color: #ffffff;
+            --border-light: #444; --border-dark: #000;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg-color); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        
+        .browser-container { width: 96%; height: 94vh; background: var(--win-bg); border: 3px outset var(--border-light); display: flex; flex-direction: column; box-shadow: 10px 10px 25px rgba(0,0,0,0.4); }
+        .window-header { background: linear-gradient(90deg, #000080, #1084d0); color: white; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+        
+        /* КРУПНЫЙ, НО АДЕКВАТНЫЙ ЛОГОТИП */
+        .logo-container { margin-bottom: 20px; transition: 0.3s; }
+        .logo-9 { color: #ff0000; font-style: italic; font-size: 140px; font-weight: 300; line-height: 1; text-shadow: 2px 2px 0px rgba(0,0,0,0.1); }
+        .logo-browser { color: var(--logo-browser-color); font-size: 80px; font-weight: 300; letter-spacing: -3px; margin-left: -5px; }
+
+        #main-viewport { flex-grow: 1; background: var(--view-bg); margin: 5px; border: 2px inset var(--border-dark); position: relative; overflow-y: auto; color: var(--text-color); }
+
+        /* ИНТЕРФЕЙС ГЛАВНОЙ */
+        .search-home { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; width: 100%; }
+        
+        .main-search-input { width: 80%; max-width: 850px; padding: 20px 35px; font-size: 22px; border: 1px solid #dfe1e5; border-radius: 30px; outline: none; background: var(--view-bg); color: var(--text-color); box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: 0.2s; }
+        .main-search-input:focus { box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-color: transparent; }
+
+        .btn-group { margin-top: 35px; display: flex; gap: 15px; }
+        .btn-ui { background: #f8f9fa; color: #3c4043; border: 1px solid #f8f9fa; padding: 12px 30px; cursor: pointer; font-size: 16px; border-radius: 4px; transition: 0.1s; }
+        .btn-ui:hover { border: 1px solid #dadce0; color: #000; background: #fff; }
+
+        /* СПЕЦ-ЭКРАНЫ */
+        .black-screen { background: black; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        .matrix-text { padding: 40px; font-size: 18px; color: var(--text-color); opacity: 0.8; }
+
+        .toolbar { padding: 8px; background: var(--win-bg); border-bottom: 2px groove var(--border-light); display: flex; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="browser-container">
+    <div class="window-header">
+        <div>9BrowseR Premium OS</div>
+        <div id="status-bar" style="font-weight: bold;">[Вход не выполнен]</div>
+    </div>
+
+    <div class="toolbar" id="main-nav" style="display:none;">
+        <button class="btn-ui" style="padding:4px 12px;" onclick="showHome()">🏠</button>
+        <input type="text" id="addressBar" style="flex-grow:1; border:2px inset #fff; padding:4px;" readonly>
+        <button class="btn-ui" style="padding:4px 12px; color:red;" onclick="location.reload()">ВЫХОД</button>
+    </div>
+
+    <div id="main-viewport">
+        <div id="auth-screen" style="position:absolute; width:100%; height:100%; background:var(--bg-color); display:flex; justify-content:center; align-items:center; z-index:100;">
+            <div style="background:#c0c0c0; padding:30px; border:4px outset #fff; box-shadow:15px 15px 0px rgba(0,0,0,0.3); width:350px;">
+                <h3 style="margin-top:0; background:#000080; color:white; padding:5px;">Авторизация 9Net</h3>
+                <input type="text" id="userIn" placeholder="Имя" style="width:90%; padding:10px; margin-bottom:10px; border:2px inset #fff;">
+                <input type="password" id="passIn" placeholder="Пароль" style="width:90%; padding:10px; margin-bottom:20px; border:2px inset #fff;">
+                <button class="btn-ui" style="width:100%; margin-bottom:10px;" onclick="doLogin()">ВОЙТИ</button>
+                <button class="btn-ui" style="width:100%; background:#bbb;" onclick="doGuest()">КАК ГОСТЬ</button>
+            </div>
+        </div>
+
+        <div id="app-content" style="display:none; width:100%; height:100%;"></div>
+    </div>
+</div>
+
+<script>
+    const app = document.getElementById('app-content');
+    const auth = document.getElementById('auth-screen');
+    const nav = document.getElementById('main-nav');
+    const addr = document.getElementById('addressBar');
+
+    function doLogin() { access('User_' + document.getElementById('userIn').value); }
+    function doGuest() { access('Guest_' + Math.floor(1000 + Math.random()*8999)); }
+
+    function access(name) {
+        auth.style.display = 'none';
+        nav.style.display = 'flex';
+        app.style.display = 'block';
+        document.getElementById('status-bar').innerText = "👤 " + name;
+        showHome();
+    }
+
+    function showHome() {
+        addr.value = "9browser://search";
+        app.innerHTML = `
+            <div class="search-home">
+                <div class="logo-container">
+                    <span class="logo-9">9</span>
+                    <span class="logo-browser">BrowseR</span>
+                </div>
+                <input type="text" id="searchInput" class="main-search-input" placeholder="Поиск или введите секретный код..." autofocus>
+                <div class="btn-group">
+                    <button class="btn-ui" onclick="goSearch(false)">Поиск</button>
+                    <button class="btn-ui" style="background:#f2f2f2;" onclick="goSearch(true)">Мне повезёт!</button>
+                    <button class="btn-ui" onclick="document.body.classList.toggle('dark-mode')">🌓 Тема</button>
+                </div>
+            </div>`;
+        document.getElementById('searchInput').addEventListener("keypress", (e) => {if(e.key==="Enter") goSearch(false);});
+    }
+
+    function goSearch(lucky) {
+        const val = document.getElementById('searchInput').value;
+        if(!val) return;
+
+        if(lucky) {
+            if(val === "67") return show67();
+            if(val === "25.12.25") return showSaper();
+            if(val === "нифига") return showVoid();
+        }
+        
+        addr.value = "https://google.com/search?q=" + val;
+        app.innerHTML = `<div style="text-align:center; padding:100px;"><h2>🔍 Результаты для: ${val}</h2><p>Переход по внешнему шлюзу...</p><button class="btn-ui" onclick="showHome()">Назад</button></div>`;
+        window.open("https://google.com/search?q=" + val, "_blank");
+    }
+
+    function show67() {
+        addr.value = "9browser://matrix_67";
+        let s = ""; for(let i=0; i<1500; i++) s += "67 ";
+        app.innerHTML = `<div class="matrix-text"><h2>Matrix 67</h2><p>${s}</p><button class="btn-ui" onclick="showHome()">Выход</button></div>`;
+    }
+
+    function showVoid() {
+        addr.value = "9browser://void";
+        app.innerHTML = `
+            <div class="black-screen">
+                <button class="btn-ui" style="opacity:0.02;">Ловушка</button>
+                <button class="btn-ui" style="background:#0a0a0a; border:none; color:#222;" onclick="alert('Кик!'); showHome()">СЕКРЕТ</button>
+            </div>`;
+    }
+
+    function showSaper() {
+        addr.value = "9browser://easter_egg_saper";
+        app.innerHTML = `
+            <div class="search-home">
+                <h3>САПЕР 25.12.25</h3>
+                <div style="display:grid; grid-template-columns:repeat(5, 55px); gap:4px; background:#999; padding:8px; border:3px outset #fff;">
+                    ${Array(25).fill().map(() => `<div onclick="this.style.background='red'; this.innerText='💣'; setTimeout(()=>alert('НИФИГА ТЫ ПРОИГРАЛ'), 100); setTimeout(showHome, 600)" style="width:55px; height:55px; background:#ccc; border:2px solid #fff; cursor:pointer; display:flex; align-items:center; justify-content:center;"></div>`).join('')}
+                </div>
+                <br><button class="btn-ui" onclick="showHome()">Вернуться</button>
+            </div>`;
+    }
+</script>
+
+</body>
+</html>
